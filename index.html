@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AppointmentIQ — Reminder System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --surface2: #1a1a26;
+      --border: #2a2a40;
+      --accent: #00e5a0;
+      --accent2: #7c3aed;
+      --accent3: #f59e0b;
+      --text: #e8e8f0;
+      --muted: #6b6b8a;
+      --danger: #ef4444;
+      --success: #10b981;
+      --whatsapp: #25d366;
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Animated grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #app {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(10,10,15,0.8);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .logo-text {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 20px;
+      letter-spacing: -0.5px;
+    }
+
+    .logo-text span { color: var(--accent); }
+
+    .header-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ── Main layout ── */
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 0;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 40px;
+      gap: 32px;
+    }
+
+    @media (max-width: 900px) {
+      main { grid-template-columns: 1fr; padding: 20px; }
+      header { padding: 16px 20px; }
+    }
+
+    /* ── Section labels ── */
+    .section-label {
+      font-family: 'Syne', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Form card ── */
+    .form-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .form-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .form-card::before {
+      content: '';
+      position: absolute;
+      top: -60px;
+      right: -60px;
+      width: 180px;
+      height: 180px;
+      background: radial-gradient(circle, rgba(0,229,160,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .form-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      line-height: 1.2;
+    }
+
+    .form-subtitle {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 28px;
+    }
+
+    .field {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 13px 16px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0,229,160,0.1);
+    }
+
+    input::placeholder { color: var(--muted); }
+
+    .phone-hint {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 5px;
+    }
+
+    .phone-hint span { color: var(--accent3); }
+
+    /* ── Submit button ── */
+    .btn-submit {
+      width: 100%;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 10px;
+      padding: 14px 24px;
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.2s;
+      margin-top: 8px;
+      letter-spacing: 0.3px;
+    }
+
+    .btn-submit:hover:not(:disabled) {
+      background: #00ffa8;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(0,229,160,0.25);
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-submit.loading .btn-text { display: none; }
+    .btn-submit:not(.loading) .spinner { display: none; }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(0,0,0,0.3);
+      border-top-color: #000;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Toast ── */
+    .toast-area {
+      position: fixed;
+      bottom: 32px;
+      right: 32px;
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      min-width: 300px;
+      max-width: 380px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      animation: slideIn 0.3s ease;
+      pointer-events: all;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .toast.success { border-left: 3px solid var(--success); }
+    .toast.error { border-left: 3px solid var(--danger); }
+    .toast.info { border-left: 3px solid var(--accent2); }
+    .toast.whatsapp { border-left: 3px solid var(--whatsapp); }
+
+    .toast-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+    .toast-body { flex: 1; }
+    .toast-title { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 13px; margin-bottom: 3px; }
+    .toast-msg { font-size: 12px; color: var(--muted); line-height: 1.4; }
+
+    /* ── Dashboard panel ── */
+    .dashboard-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* ── Stats row ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      bottom: -20px;
+      right: -20px;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      opacity: 0.06;
+    }
+
+    .stat-card.total::after { background: var(--accent); }
+    .stat-card.sent::after { background: var(--whatsapp); }
+    .stat-card.upcoming::after { background: var(--accent3); }
+
+    .stat-label {
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .stat-card.total .stat-value { color: var(--accent); }
+    .stat-card.sent .stat-value { color: var(--whatsapp); }
+    .stat-card.upcoming .stat-value { color: var(--accent3); }
+
+    /* ── Table ── */
+    .table-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      flex: 1;
+    }
+
+    .table-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .table-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .btn-refresh {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 14px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      transition: all 0.2s;
+    }
+
+    .btn-refresh:hover { border-color: var(--accent); color: var(--accent); }
+
+    .btn-refresh.spinning svg { animation: spin 0.7s linear infinite; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead th {
+      text-align: left;
+      padding: 12px 24px;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      font-weight: 500;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid rgba(42,42,64,0.5);
+      transition: background 0.15s;
+    }
+
+    tbody tr:hover { background: rgba(255,255,255,0.02); }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr.new-row { animation: rowIn 0.4s ease; }
+
+    @keyframes rowIn {
+      from { opacity: 0; background: rgba(0,229,160,0.05); }
+      to { opacity: 1; background: transparent; }
+    }
+
+    td {
+      padding: 14px 24px;
+      font-size: 13px;
+      vertical-align: middle;
+    }
+
+    .td-name { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px; }
+    .td-phone { color: var(--muted); font-size: 12px; }
+    .td-time { color: var(--text); }
+    .td-time .time-rel { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* ── Status badges ── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .badge.confirmed { background: rgba(0,229,160,0.1); color: var(--accent); border: 1px solid rgba(0,229,160,0.2); }
+    .badge.sent { background: rgba(37,211,102,0.1); color: var(--whatsapp); border: 1px solid rgba(37,211,102,0.2); }
+    .badge.reminder { background: rgba(245,158,11,0.1); color: var(--accent3); border: 1px solid rgba(245,158,11,0.2); }
+    .badge.simulated { background: rgba(124,58,237,0.1); color: #a78bfa; border: 1px solid rgba(124,58,237,0.2); }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center;
+      padding: 60px 24px;
+      color: var(--muted);
+    }
+
+    .empty-icon { font-size: 40px; margin-bottom: 16px; }
+    .empty-title { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 16px; color: var(--text); margin-bottom: 8px; }
+    .empty-msg { font-size: 13px; }
+
+    /* ── WhatsApp preview ── */
+    .wa-preview {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .wa-preview-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .wa-bubble {
+      background: #1a2f1e;
+      border: 1px solid rgba(37,211,102,0.2);
+      border-radius: 0 12px 12px 12px;
+      padding: 14px 16px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #d4f7dc;
+      position: relative;
+      max-width: 340px;
+    }
+
+    .wa-bubble::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -8px;
+      width: 0;
+      height: 0;
+      border-right: 8px solid #1a2f1e;
+      border-bottom: 8px solid transparent;
+    }
+
+    .wa-meta {
+      font-size: 10px;
+      color: rgba(37,211,102,0.5);
+      margin-top: 6px;
+      text-align: right;
+    }
+
+    .wa-note {
+      margin-top: 12px;
+      font-size: 11px;
+      color: var(--muted);
+      padding: 8px 12px;
+      background: rgba(124,58,237,0.08);
+      border: 1px solid rgba(124,58,237,0.15);
+      border-radius: 8px;
+    }
+
+    .wa-note strong { color: #a78bfa; }
+
+    /* ── Config notice ── */
+    .config-notice {
+      background: rgba(245,158,11,0.06);
+      border: 1px solid rgba(245,158,11,0.2);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 12px;
+      color: var(--accent3);
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .config-notice a {
+      color: var(--accent);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    /* ── Upcoming reminder badge ── */
+    .urgent-row td { background: rgba(245,158,11,0.04); }
+
+    /* ── Code block (for technical section) ── */
+    .tech-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .tech-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .tech-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+    }
+
+    .tech-item-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 5px; }
+    .tech-item-value { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 13px; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="logo">
+      <div class="logo-icon">📅</div>
+      <div class="logo-text">Appointment<span>IQ</span></div>
+    </div>
+    <div class="header-status">
+      <div class="status-dot"></div>
+      <span id="db-status">Connecting to database…</span>
+    </div>
+  </header>
+
+  <main>
+    <!-- LEFT: Form panel -->
+    <div class="form-panel">
+      <div class="section-label">New Appointment</div>
+
+      <div class="form-card">
+        <div class="form-title">Schedule a<br>Reminder</div>
+        <div class="form-subtitle">Customer will receive a WhatsApp confirmation immediately.</div>
+
+        <div class="field">
+          <label>Customer Name</label>
+          <input type="text" id="inp-name" placeholder="Jane Doe" autocomplete="off" />
+        </div>
+
+        <div class="field">
+          <label>WhatsApp Phone Number</label>
+          <input type="tel" id="inp-phone" placeholder="+19155551234" autocomplete="off" />
+          <p class="phone-hint">Include country code. E.g. <span>+1</span> for USA, <span>+52</span> for Mexico.</p>
+        </div>
+
+        <div class="field">
+          <label>Appointment Date & Time</label>
+          <input type="datetime-local" id="inp-datetime" />
+        </div>
+
+        <button class="btn-submit" id="btn-submit" onclick="submitAppointment()">
+          <span class="btn-text">📲 Book &amp; Send Confirmation</span>
+          <div class="spinner"></div>
+        </button>
+      </div>
+
+      <!-- WhatsApp message preview -->
+      <div style="margin-top: 24px;">
+        <div class="section-label">Message Preview</div>
+        <div class="wa-preview">
+          <div class="wa-preview-title">
+            <span style="color:var(--whatsapp)">●</span> WhatsApp Message
+          </div>
+          <div class="wa-bubble" id="wa-preview-text">
+            Hi [Customer Name] 👋<br><br>
+            Your appointment has been confirmed for<br>
+            <strong>[Date & Time]</strong><br><br>
+            We'll see you then! Reply STOP to opt out.<br><br>
+            — Better Call Centers / El Paso Water Quality
+          </div>
+          <div class="wa-meta">✓✓ Delivered</div>
+          <div class="wa-note">
+            <strong>Note:</strong> In production, this is sent via
+            <strong>Twilio WhatsApp API</strong> or <strong>WhatsApp Cloud API</strong>.
+            In this demo, sends are <em>simulated</em> and logged to the database.
+            See <code>sendWhatsApp()</code> in source for the real integration point.
+          </div>
+        </div>
+      </div>
+
+      <!-- Tech stack -->
+      <div style="margin-top: 24px;">
+        <div class="section-label">Stack</div>
+        <div class="tech-panel">
+          <div class="tech-grid">
+            <div class="tech-item">
+              <div class="tech-item-label">Database</div>
+              <div class="tech-item-value">localStorage (Supabase-ready)</div>
+            </div>
+            <div class="tech-item">
+              <div class="tech-item-label">Messaging</div>
+              <div class="tech-item-value">Twilio / WA Cloud API</div>
+            </div>
+            <div class="tech-item">
+              <div class="tech-item-label">Frontend</div>
+              <div class="tech-item-value">Vanilla JS + CSS</div>
+            </div>
+            <div class="tech-item">
+              <div class="tech-item-label">Reminders</div>
+              <div class="tech-item-value">setInterval polling (1 min)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Dashboard -->
+    <div class="dashboard-panel">
+      <div class="section-label">Live Dashboard</div>
+
+      <div class="stats-row">
+        <div class="stat-card total">
+          <div class="stat-label">Total</div>
+          <div class="stat-value" id="stat-total">0</div>
+        </div>
+        <div class="stat-card sent">
+          <div class="stat-label">Msgs Sent</div>
+          <div class="stat-value" id="stat-sent">0</div>
+        </div>
+        <div class="stat-card upcoming">
+          <div class="stat-label">Upcoming</div>
+          <div class="stat-value" id="stat-upcoming">0</div>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title">All Appointments</div>
+          <button class="btn-refresh" id="btn-refresh" onclick="refreshDashboard(true)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+            </svg>
+            Refresh
+          </button>
+        </div>
+
+        <div id="table-container">
+          <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <div class="empty-title">No appointments yet</div>
+            <div class="empty-msg">Book your first appointment using the form.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast-area" id="toast-area"></div>
+
+<script>
+// ════════════════════════════════════════════════════════
+// CONFIG — swap these for real credentials in production
+// ════════════════════════════════════════════════════════
+const CONFIG = {
+  // ── Supabase (uncomment + fill to use real DB) ──
+  // SUPABASE_URL: 'https://xxxx.supabase.co',
+  // SUPABASE_ANON_KEY: 'eyJ...',
+
+  // ── Twilio (server-side only — never expose in frontend) ──
+  // In production, POST to your own backend endpoint
+  // TWILIO_ACCOUNT_SID: 'ACxxxx',
+  // TWILIO_AUTH_TOKEN: 'xxxx',
+  // TWILIO_WHATSAPP_FROM: 'whatsapp:+14155238886',
+
+  // ── WhatsApp Cloud API (Meta) ──
+  // WA_ACCESS_TOKEN: 'EAAxx...',
+  // WA_PHONE_NUMBER_ID: '12345',
+
+  USE_REAL_DB: false,      // set true when Supabase creds are added
+  USE_REAL_WA: true,       // calls /api/send-whatsapp on the local Node server
+  SIMULATE_DELAY_MS: 900,  // realistic async feel
+  REMINDER_CHECK_INTERVAL_MS: 60_000, // check every 60s
+  REMINDER_WINDOW_MINUTES: 60,        // send reminder if within 60 min
+};
+
+// ════════════════════════════════════════════════════════
+// DATABASE LAYER
+// Using localStorage as a stand-in for Supabase.
+// The interface is identical — swap the body of each fn.
+// ════════════════════════════════════════════════════════
+
+const DB = {
+  key: 'appointmentiq_v1',
+
+  getAll() {
+    try {
+      return JSON.parse(localStorage.getItem(this.key) || '[]');
+    } catch { return []; }
+  },
+
+  save(appointment) {
+    const all = this.getAll();
+    all.unshift(appointment); // newest first
+    localStorage.setItem(this.key, JSON.stringify(all));
+    return appointment;
+  },
+
+  update(id, patch) {
+    const all = this.getAll();
+    const idx = all.findIndex(a => a.id === id);
+    if (idx !== -1) {
+      all[idx] = { ...all[idx], ...patch };
+      localStorage.setItem(this.key, JSON.stringify(all));
+    }
+  },
+
+  // ── SUPABASE EQUIVALENT (reference) ──────────────────
+  // async getAllSupabase() {
+  //   const { data, error } = await supabase
+  //     .from('appointments')
+  //     .select('*')
+  //     .order('created_at', { ascending: false });
+  //   if (error) throw error;
+  //   return data;
+  // },
+  // async saveSupabase(appointment) {
+  //   const { data, error } = await supabase
+  //     .from('appointments')
+  //     .insert([appointment])
+  //     .single();
+  //   if (error) throw error;
+  //   return data;
+  // },
+};
+
+// ════════════════════════════════════════════════════════
+// MESSAGING LAYER
+// Simulated here. In production, call your backend or
+// a serverless function that holds the secret keys.
+// ════════════════════════════════════════════════════════
+
+async function sendWhatsApp(to, messageBody, type = 'confirmation') {
+  console.group(`📲 WhatsApp ${type.toUpperCase()}`);
+  console.log('To:', to);
+  console.log('Body:', messageBody);
+  console.groupEnd();
+
+  if (CONFIG.USE_REAL_WA) {
+    // ── Twilio via local Express server ──────────────
+    const resp = await fetch('/api/send-whatsapp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to, body: messageBody }),
+    });
+    const result = await resp.json();
+    if (!resp.ok) throw new Error(result.error || 'Twilio send failed');
+    return result;
+  }
+
+  // ── SIMULATED SEND ────────────────────────────────
+  await new Promise(r => setTimeout(r, CONFIG.SIMULATE_DELAY_MS));
+  return { simulated: true, to, messageBody, sentAt: new Date().toISOString() };
+}
+
+function buildConfirmationMessage(name, datetimeStr) {
+  const dt = new Date(datetimeStr);
+  const formatted = dt.toLocaleString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long',
+    day: 'numeric', hour: '2-digit', minute: '2-digit'
+  });
+  return `Hi ${name} 👋\n\nYour appointment has been confirmed for:\n📅 ${formatted}\n\nWe'll see you then! Reply STOP to opt out.\n\n— Better Call Centers / El Paso Water Quality`;
+}
+
+function buildReminderMessage(name, datetimeStr) {
+  const dt = new Date(datetimeStr);
+  const formatted = dt.toLocaleString('en-US', { hour: '2-digit', minute: '2-digit' });
+  return `⏰ Reminder, ${name}!\n\nYour appointment is in less than 1 hour — at ${formatted} today.\n\nSee you soon!\n\n— Better Call Centers / El Paso Water Quality`;
+}
+
+// ════════════════════════════════════════════════════════
+// FORM SUBMISSION
+// ════════════════════════════════════════════════════════
+
+async function submitAppointment() {
+  const name = document.getElementById('inp-name').value.trim();
+  const phone = document.getElementById('inp-phone').value.trim();
+  const datetime = document.getElementById('inp-datetime').value;
+
+  // Validation
+  if (!name) return showToast('error', '⚠️ Missing field', 'Please enter the customer name.');
+  if (!phone) return showToast('error', '⚠️ Missing field', 'Please enter a phone number.');
+  if (!datetime) return showToast('error', '⚠️ Missing field', 'Please select a date and time.');
+  if (!/^\+?\d{7,15}$/.test(phone.replace(/[\s\-()]/g, '')))
+    return showToast('error', '⚠️ Invalid phone', 'Include country code, e.g. +19155551234');
+
+  const apptTime = new Date(datetime);
+  if (apptTime < new Date())
+    return showToast('error', '⚠️ Past date', 'Please choose a future date and time.');
+
+  setLoading(true);
+
+  try {
+    const appointment = {
+      id: crypto.randomUUID(),
+      name,
+      phone: phone.replace(/[\s\-()]/g, ''),
+      datetime,
+      status: 'pending',
+      messageSent: false,
+      reminderSent: false,
+      createdAt: new Date().toISOString(),
+    };
+
+    // 1. Save to DB
+    DB.save(appointment);
+    showToast('success', '✅ Saved', `Appointment for ${name} saved to database.`);
+
+    // 2. Send WhatsApp confirmation
+    const msg = buildConfirmationMessage(name, datetime);
+    const result = await sendWhatsApp(appointment.phone, msg, 'confirmation');
+
+    DB.update(appointment.id, { messageSent: true, status: 'confirmed' });
+
+    if (result.simulated) {
+      showToast('whatsapp', '📲 Message Simulated', `WhatsApp confirmation logged for ${name}. (Real send disabled — see CONFIG.USE_REAL_WA)`);
+    } else {
+      showToast('whatsapp', '📲 WhatsApp Sent!', `Confirmation delivered to ${phone}.`);
+    }
+
+    // 3. Clear form & refresh
+    document.getElementById('inp-name').value = '';
+    document.getElementById('inp-phone').value = '';
+    document.getElementById('inp-datetime').value = '';
+    updatePreview('', '');
+
+    refreshDashboard(false, appointment.id);
+
+  } catch (err) {
+    console.error(err);
+    showToast('error', '❌ Error', err.message || 'Something went wrong. Check the console.');
+  } finally {
+    setLoading(false);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// REMINDER CHECKER (BONUS)
+// Runs every CONFIG.REMINDER_CHECK_INTERVAL_MS
+// Sends a reminder if appointment is within 60 minutes
+// and a reminder hasn't been sent yet.
+// ════════════════════════════════════════════════════════
+
+function checkReminders() {
+  const now = new Date();
+  const appointments = DB.getAll();
+  let sent = 0;
+
+  for (const appt of appointments) {
+    if (appt.reminderSent || appt.status === 'past') continue;
+
+    const apptTime = new Date(appt.datetime);
+    const diffMin = (apptTime - now) / 60_000;
+
+    if (diffMin > 0 && diffMin <= CONFIG.REMINDER_WINDOW_MINUTES) {
+      // Mark first to prevent double-send in race condition
+      DB.update(appt.id, { reminderSent: true });
+      const msg = buildReminderMessage(appt.name, appt.datetime);
+
+      sendWhatsApp(appt.phone, msg, 'reminder').then(result => {
+        sent++;
+        if (result.simulated) {
+          showToast('info', `⏰ Reminder Triggered`, `1-hour reminder simulated for ${appt.name}.`);
+        } else {
+          showToast('whatsapp', `⏰ Reminder Sent!`, `WhatsApp reminder delivered to ${appt.name}.`);
+        }
+        refreshDashboard();
+      });
+    }
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// DASHBOARD
+// ════════════════════════════════════════════════════════
+
+let lastNewId = null;
+
+function refreshDashboard(showSpin = false, highlightId = null) {
+  if (highlightId) lastNewId = highlightId;
+  if (showSpin) {
+    const btn = document.getElementById('btn-refresh');
+    btn.classList.add('spinning');
+    setTimeout(() => btn.classList.remove('spinning'), 800);
+  }
+
+  const appointments = DB.getAll();
+  const now = new Date();
+
+  // Update stats
+  const upcoming = appointments.filter(a => new Date(a.datetime) > now).length;
+  const sent = appointments.filter(a => a.messageSent).length;
+  document.getElementById('stat-total').textContent = appointments.length;
+  document.getElementById('stat-sent').textContent = sent;
+  document.getElementById('stat-upcoming').textContent = upcoming;
+
+  const container = document.getElementById('table-container');
+
+  if (appointments.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <div class="empty-title">No appointments yet</div>
+        <div class="empty-msg">Book your first appointment using the form on the left.</div>
+      </div>`;
+    return;
+  }
+
+  const rows = appointments.map(a => {
+    const apptTime = new Date(a.datetime);
+    const isPast = apptTime < now;
+    const diffMin = (apptTime - now) / 60_000;
+    const isUrgent = diffMin > 0 && diffMin <= 60;
+
+    const rel = isPast ? 'Past' : formatRelative(apptTime, now);
+    const dateStr = apptTime.toLocaleString('en-US', {
+      month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+
+    let statusBadge = '';
+    if (a.reminderSent) {
+      statusBadge = `<span class="badge reminder">⏰ Reminded</span>`;
+    } else if (a.messageSent) {
+      statusBadge = CONFIG.USE_REAL_WA
+        ? `<span class="badge sent">✓ Sent</span>`
+        : `<span class="badge simulated">◈ Simulated</span>`;
+    } else {
+      statusBadge = `<span class="badge confirmed">● Confirmed</span>`;
+    }
+
+    const isNew = a.id === lastNewId;
+
+    return `
+      <tr class="${isNew ? 'new-row' : ''} ${isUrgent ? 'urgent-row' : ''}">
+        <td>
+          <div class="td-name">${escHtml(a.name)}</div>
+        </td>
+        <td class="td-phone">${escHtml(a.phone)}</td>
+        <td class="td-time">
+          ${dateStr}
+          <span class="time-rel">${rel}</span>
+        </td>
+        <td>${statusBadge}</td>
+      </tr>`;
+  }).join('');
+
+  container.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Phone</th>
+          <th>Appointment</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+// ════════════════════════════════════════════════════════
+// LIVE PREVIEW
+// ════════════════════════════════════════════════════════
+
+document.getElementById('inp-name').addEventListener('input', updatePreviewFromForm);
+document.getElementById('inp-datetime').addEventListener('input', updatePreviewFromForm);
+
+function updatePreviewFromForm() {
+  const name = document.getElementById('inp-name').value.trim() || '[Customer Name]';
+  const dt = document.getElementById('inp-datetime').value;
+  updatePreview(name, dt);
+}
+
+function updatePreview(name, datetimeStr) {
+  const el = document.getElementById('wa-preview-text');
+  if (!name && !datetimeStr) {
+    el.innerHTML = `Hi [Customer Name] 👋<br><br>Your appointment has been confirmed for<br><strong>[Date & Time]</strong><br><br>We'll see you then! Reply STOP to opt out.<br><br>— Better Call Centers / El Paso Water Quality`;
+    return;
+  }
+  const displayName = name || '[Customer Name]';
+  let dtDisplay = '[Date & Time]';
+  if (datetimeStr) {
+    try {
+      dtDisplay = new Date(datetimeStr).toLocaleString('en-US', {
+        weekday: 'long', year: 'numeric', month: 'long',
+        day: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+    } catch {}
+  }
+  el.innerHTML = `Hi ${escHtml(displayName)} 👋<br><br>Your appointment has been confirmed for:<br>📅 <strong>${escHtml(dtDisplay)}</strong><br><br>We'll see you then! Reply STOP to opt out.<br><br>— Better Call Centers / El Paso Water Quality`;
+}
+
+// ════════════════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════════════════
+
+function setLoading(on) {
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = on;
+  btn.classList.toggle('loading', on);
+}
+
+function showToast(type, title, msg) {
+  const icons = { success: '✅', error: '❌', info: '💡', whatsapp: '📲' };
+  const area = document.getElementById('toast-area');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `
+    <div class="toast-icon">${icons[type] || 'ℹ️'}</div>
+    <div class="toast-body">
+      <div class="toast-title">${title}</div>
+      <div class="toast-msg">${msg}</div>
+    </div>`;
+  area.appendChild(el);
+  setTimeout(() => el.remove(), 5000);
+}
+
+function formatRelative(future, now) {
+  const diff = future - now;
+  const min = Math.round(diff / 60_000);
+  if (min < 1) return 'In < 1 min';
+  if (min < 60) return `In ${min} min`;
+  const hr = Math.round(min / 60);
+  if (hr < 24) return `In ${hr}h`;
+  const days = Math.round(hr / 24);
+  return `In ${days}d`;
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════
+
+(function init() {
+  // Set datetime min to now
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  document.getElementById('inp-datetime').min = now.toISOString().slice(0, 16);
+
+  // Update DB status indicator
+  const dbOk = typeof localStorage !== 'undefined';
+  const statusEl = document.getElementById('db-status');
+  if (dbOk) {
+    statusEl.textContent = CONFIG.USE_REAL_WA ? 'Twilio connected · localStorage DB' : 'Simulation mode';
+  } else {
+    statusEl.textContent = 'Storage unavailable';
+  }
+
+  // Initial dashboard render
+  refreshDashboard();
+
+  // Reminder checker (BONUS feature)
+  checkReminders();
+  setInterval(() => {
+    checkReminders();
+    refreshDashboard(); // keep dashboard fresh
+  }, CONFIG.REMINDER_CHECK_INTERVAL_MS);
+
+  console.log('%c AppointmentIQ ', 'background:#00e5a0;color:#000;font-weight:bold;padding:4px 8px;border-radius:4px;');
+  console.log('sendWhatsApp() → integrate Twilio or WA Cloud API here');
+  console.log('DB.save/getAll/update() → swap for Supabase client here');
+})();
+</script>
+</body>
+</html>
